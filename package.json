@@ -3,16 +3,16 @@
   "version": "1.0.0",
   "dependencies": {
     "@cap-js/hana": "^2",
+    "@sap-cloud-sdk/connectivity": "^4.6.0",
     "@sap-cloud-sdk/http-client": "^4.6.0",
+    "@sap-cloud-sdk/resilience": "^4",
     "@sap-cloud-sdk/util": "^4.6.0",
     "@sap/cds": "^9",
     "@sap/low-code-event-handler": "^1.2.5",
     "@sap/xsenv": ">=3.3.2 <3.3.3",
     "@sap/xssec": "^4.13.0",
     "hdb": "^2.27.1",
-    "passport": "^0.7.0",
-    "@sap-cloud-sdk/connectivity": "^4",
-    "@sap-cloud-sdk/resilience": "^4"
+    "passport": "^0.7.0"
   },
   "devDependencies": {
     "@cap-js/sqlite": "^2.4",
@@ -32,6 +32,13 @@
         "auth": "xsuaa"
       },
       "auth": {
+        "strategy": "mock",
+        "users": {
+          "keerthana": {
+            "id": "keerthanadevi.natarajan@distrelec.com",
+            "roles": ["User"]
+          }
+        },
         "[development]": {
           "kind": "dummy"
         },
@@ -42,13 +49,11 @@
       "CE_PURCHASEORDER_0001": {
         "kind": "odata",
         "model": "srv/external/CE_PURCHASEORDER_0001",
-        "[production]": {
-          "credentials": {
-            "destination": "SAP_Purchaseorder_API"
-          }
+        "credentials": {
+          "destination": "SAP_Purchaseorder_API"
         }
       }
     }
-  },
+  },  
   "lcap": true
 }

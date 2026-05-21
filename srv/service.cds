@@ -1,11 +1,6 @@
 using { Vendor_portal as my } from '../db/schema.cds';
 
-using
-{
-    CE_PURCHASEORDER_0001.PurchaseOrder,
-    CE_PURCHASEORDER_0001.PurchaseOrderItem
-}
-from './external/CE_PURCHASEORDER_0001';
+using { CE_PURCHASEORDER_0001.PurchaseOrder} from './external/CE_PURCHASEORDER_0001';
 
 @path : '/service/Vendor_portalService'
 service Vendor_portalService
@@ -15,14 +10,7 @@ service Vendor_portalService
         projection on my.MappingVendors;
 
     entity PurchaseOrders as
-        projection on PurchaseOrder
-        {
-            PurchaseOrder,
-            PurchaseOrderType,
-            CreationDate,
-            PurchaseOrderDate,
-            Supplier
-        };
+        projection on PurchaseOrder;
 }
 
 annotate Vendor_portalService with @requires :
