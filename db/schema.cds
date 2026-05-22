@@ -19,4 +19,22 @@ entity PurchaseOrders as
             PurchaseOrderDate,
             Supplier
         };
+    entity PurchaseOrder_ERP
+{
+    key RSPONumber : Integer;
+    Status : String(20);
+    RSPOLineItemNumber : Integer;
+    RSArticleNUmber : Integer;
+    Pack : Integer;
+    VendorERPNumber : Integer;
+    VendorPartNumber : String(20);
+    Quantity : Integer;
+    Unit : String(3);
+    DeliveryDate : Date;
+    DateCreated : Date;
+    DeliverytoSite : String(40);
+    UnitPrice : Decimal;
+    PricePerLineValue : Decimal;
+    RSPlanner : String(40);
+}
 

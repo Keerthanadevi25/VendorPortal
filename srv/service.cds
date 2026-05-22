@@ -11,6 +11,8 @@ service Vendor_portalService
 
     entity PurchaseOrders as
         projection on PurchaseOrder;
+    entity PurchaseOrder_ERP1 as
+        projection on my.PurchaseOrder_ERP;
 }
 
 annotate Vendor_portalService with @requires :

@@ -6,6 +6,7 @@ module.exports = cds.service.impl(async function() {
      const { PurchaseOrder } = CE_PURCHASEORDER_0001.entities; 
         // Get a reference to  local MappingVendors entity
      const { MappingVendors } = this.entities;
+     const {PurchaseOrder_ERP1} = this.entities; // Reference to the internal entity}
 
      this.on('READ', 'PurchaseOrders', async (req) => {
         try {
@@ -38,6 +39,56 @@ module.exports = cds.service.impl(async function() {
             Accept: "application/json",
         },
     });
+    pur_orders.$count = pur_orders.length; // Add the count of records to the response
+    return pur_orders;  
+}
+catch (error) {   
+        req.error(500, `External API Error: ${error.message}`);
+    }
+    });
+
+
+
+    this.on('READ', 'PurchaseOrder_ERP1', async (req) => {
+        try {
+           // const userEmail = req.user.id; //to get the logged in user email
+           const userEmail = 'keerthanadevi.natarajan@distrelec.com'; // Hardcoded email for testing
+
+
+           //Fetch VendorERPNumber mapped to this email from the local database
+            const mappedVendor = await cds.run(
+                SELECT.one.from(MappingVendors)
+                      .columns('VendorERPNumber')
+                      .where({ Email: userEmail })
+            );
+            //If no vendors are mapped to this email, return an empty array immediately
+            if (!mappedVendor || mappedVendor.length === 0) {
+                console.log(`No vendor mapping found for email: ${userEmail}`);
+                const emptyResponse = [];
+                emptyResponse.$count = 0;
+                return emptyResponse;
+            }
+            //Fetch from internal entity , filtering 'VendorERPNUmber' by the retrieved vendor numbers   
+    const  pur_orders = await cds.run (
+                SELECT.from(PurchaseOrder_ERP1)
+                      .columns(
+                        'RSPONumber', 
+                        'Status', 
+                        'RSPOLineItemNumber', 
+                        'RSArticleNUmber',
+                        'Pack',    
+                        'VendorERPNumber',
+                        'VendorPartNumber',
+                        'Quantity',
+                        'Unit',
+                        'DeliveryDate',
+                        'DateCreated',
+                        'DeliverytoSite',
+                        'UnitPrice',
+                        'PricePerLineValue',
+                        'RSPlanner').where({ VendorERPNumber: mappedVendor.VendorERPNumber })
+      
+    );
     pur_orders.$count = pur_orders.length; // Add the count of records to the response
     return pur_orders;  
 }
