@@ -7,7 +7,8 @@
     "@sap-cloud-sdk/http-client": "^4.6.0",
     "@sap-cloud-sdk/resilience": "^4",
     "@sap-cloud-sdk/util": "^4.6.0",
-    "@sap/cds": "^9",
+    "@sap/cds": "^9.9.1",
+    "@sap/cds-dk": "^9.9.1",
     "@sap/low-code-event-handler": "^1.2.5",
     "@sap/xsenv": ">=3.3.2 <3.3.3",
     "@sap/xssec": "^4.13.0",
@@ -16,13 +17,15 @@
   },
   "devDependencies": {
     "@cap-js/sqlite": "^2.4",
-    "@sap/dev-cap-tools": "^1.31.0"
+    "@sap/dev-cap-tools": "^1.31.0",
+    "cds-plugin-ui5": "^0.13.0"
   },
   "scripts": {
     "start": "cds-serve",
     "start-local": "npm run generate-entry-point && npm run cds-watch",
     "generate-entry-point": "dev-cap-tools gen-entrypoint",
-    "cds-watch": "cds watch --open"
+    "cds-watch": "cds watch --open",
+    "watch-purchseorder": "cds watch --open purchseorder/index.html?sap-ui-xx-viewCache=false --livereload false"
   },
   "private": true,
   "cds": {
@@ -36,7 +39,9 @@
         "users": {
           "keerthana": {
             "id": "keerthanadevi.natarajan@distrelec.com",
-            "roles": ["User"]
+            "roles": [
+              "User"
+            ]
           }
         },
         "[development]": {
@@ -54,6 +59,12 @@
         }
       }
     }
-  },  
-  "lcap": true
+  },
+  "lcap": true,
+  "workspaces": [
+    "app/*"
+  ],
+  "sapux": [
+    "app/purchseorder"
+  ]
 }
