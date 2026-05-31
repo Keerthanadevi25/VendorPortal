@@ -44,7 +44,7 @@ module.exports = cds.service.impl(async function () {
             'CreationDate'
           )
           .where({ Supplier: mappedVendor.VendorERPNumber })
-          .limit(50),
+          .limit(10),
         headers: { Accept: 'application/json' }
       });
 
