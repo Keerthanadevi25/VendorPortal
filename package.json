@@ -26,7 +26,8 @@
     "start-local": "npm run generate-entry-point && npm run cds-watch",
     "generate-entry-point": "dev-cap-tools gen-entrypoint",
     "cds-watch": "cds watch --open",
-    "watch-purchseorder": "cds watch --open purchseorder/index.html?sap-ui-xx-viewCache=false --livereload false"
+    "watch-purchseorder": "cds watch --open purchseorder/index.html?sap-ui-xx-viewCache=false --livereload false",
+    "test": "echo \"No tests to run\""
   },
   "private": true,
   "cds": {
@@ -70,5 +71,5 @@
   ],
   "sapux": [
     "app/purchseorder"
-  ]
+  ] 
 }
