@@ -10,7 +10,7 @@ module.exports = cds.service.impl(async function () {
   // Local entities
   const { MappingVendors, PurchaseOrder_ERP1 } = this.entities;
 
-  // Helper: get mapped vendor for current user
+  //get mapped vendor for current user
   async function getMappedVendorForUser(userEmail) {
     return cds.run(
       SELECT.one.from(MappingVendors)
