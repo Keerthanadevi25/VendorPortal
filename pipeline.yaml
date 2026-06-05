@@ -14,7 +14,7 @@ stages:
     type: cloudFoundryDeploy
     parameters:
       apiEndpoint: https://api.cf.us10-001.hana.ondemand.com
-      org: a17ff4fftrial
+      org: 90cfb10ftrial
       space: dev
       credentialsId: cf
       mtaPath: mta_archives/*.mtar
