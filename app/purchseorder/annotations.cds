@@ -1,1 +1,0 @@
-using Vendor_portalService as service from '../../srv/service';

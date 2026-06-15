@@ -38,22 +38,17 @@
       }
     }
   },
+
   "sap.ui": {
     "technology": "UI5",
-    "icons": {
-      "icon": "",
-      "favIcon": "",
-      "phone": "",
-      "phone@2": "",
-      "tablet": "",
-      "tablet@2": ""
-    },
+    "icons": {},
     "deviceTypes": {
       "desktop": true,
       "tablet": true,
       "phone": true
     }
   },
+
   "sap.ui5": {
     "flexEnabled": true,
     "dependencies": {
@@ -68,6 +63,7 @@
       "compact": true,
       "cozy": true
     },
+
     "models": {
       "i18n": {
         "type": "sap.ui.model.resource.ResourceModel",
@@ -89,39 +85,34 @@
         "uri": "i18n/i18n.properties"
       }
     },
+
     "resources": {
       "css": []
     },
+
     "routing": {
       "config": {},
       "routes": [
         {
           "pattern": ":?query:",
-          "name": "PurchaseOrder_ERP1List",
-          "target": "PurchaseOrder_ERP1List"
-        },
-        {
-          "pattern": "PurchaseOrder_ERP1({key}):?query:",
-          "name": "PurchaseOrder_ERP1ObjectPage",
-          "target": "PurchaseOrder_ERP1ObjectPage"
+          "name": "PurchaseOrderList",
+          "target": "PurchaseOrderList"
         }
       ],
       "targets": {
-        "PurchaseOrder_ERP1List": {
+        "PurchaseOrderList": {
           "type": "Component",
-          "id": "PurchaseOrder_ERP1List",
+          "id": "PurchaseOrderList",
           "name": "sap.fe.templates.ListReport",
           "options": {
             "settings": {
-              "contextPath": "/PurchaseOrder_ERP1",
-              "variantManagement": "Page",
-              "navigation": {
-                "PurchaseOrder_ERP1": {
-                  "detail": {
-                    "route": "PurchaseOrder_ERP1ObjectPage"
-                  }
-                }
+              "contextPath": "/PurchaseOrder_ERP",
+              "multiViews": {
+                "paths": [
+                  "@com.sap.vocabularies.UI.v1.MultiViewDefinition"
+                ]
               },
+              "variantManagement": "Page",
               "controlConfiguration": {
                 "@com.sap.vocabularies.UI.v1.LineItem": {
                   "tableSettings": {
@@ -131,30 +122,22 @@
               }
             }
           }
-        },
-        "PurchaseOrder_ERP1ObjectPage": {
-          "type": "Component",
-          "id": "PurchaseOrder_ERP1ObjectPage",
-          "name": "sap.fe.templates.ObjectPage",
-          "options": {
-            "settings": {
-              "editableHeaderContent": false,
-              "contextPath": "/PurchaseOrder_ERP1"
-            }
-          }
         }
       }
     }
   },
+
   "sap.fiori": {
     "registrationIds": [],
     "archeType": "transactional"
   },
+
   "sap.fe": {
     "app": {
       "enableLazyLoading": true
     }
   },
+
   "sap.cloud": {
     "public": true,
     "service": "Vendor_portal.service"

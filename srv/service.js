@@ -1,16 +1,16 @@
 const cds = require('@sap/cds');
-const { SELECT } = cds.ql;
+const { SELECT, UPDATE } = cds.ql;
 
 module.exports = cds.service.impl(async function () {
 
-  // External service
+  // External service (still used for PurchaseOrders)
   const CE_PURCHASEORDER_0001 = await cds.connect.to('CE_PURCHASEORDER_0001');
   const { PurchaseOrder } = CE_PURCHASEORDER_0001.entities;
 
   // Local entities
-  const { MappingVendors, PurchaseOrder_ERP1 } = this.entities;
+  const { MappingVendors, PurchaseOrder_ERP } = this.entities;
 
-  // get mapped vendor for current user
+  // Helper: get vendor for logged‑in user
   async function getMappedVendorForUser(userEmail) {
     return cds.run(
       SELECT.one.from(MappingVendors)
@@ -24,15 +24,10 @@ module.exports = cds.service.impl(async function () {
   // --------------------------------------------------------------------
   this.on('READ', 'PurchaseOrders', async (req) => {
     try {
-      // In real life: const userEmail = req.user.id;
       const userEmail = 'keerthanadevi.natarajan@distrelec.com';
-
       const mappedVendor = await getMappedVendorForUser(userEmail);
-      if (!mappedVendor) {
-        const empty = [];
-        empty.$count = 0;
-        return empty;
-      }
+
+      if (!mappedVendor) return [];
 
       const pur_orders = await CE_PURCHASEORDER_0001.send({
         query: SELECT.from(PurchaseOrder)
@@ -43,8 +38,7 @@ module.exports = cds.service.impl(async function () {
             'PurchaseOrderDate',
             'CreationDate'
           )
-          .where({ Supplier: mappedVendor.VendorERPNumber })
-          .limit(10),
+          .where({ Supplier: mappedVendor.VendorERPNumber }),
         headers: { Accept: 'application/json' }
       });
 
@@ -57,86 +51,47 @@ module.exports = cds.service.impl(async function () {
   });
 
   // --------------------------------------------------------------------
-  // READ PurchaseOrder_ERP1 (internal DB, draft‑enabled)
-  //  - lets CAP handle all draft + navigation reads
-  //  - applies vendor filter only for list reads
+  // READ PurchaseOrder_ERP (internal DB)
+  // Used by BOTH tabs (New PO + Live PO)
+  // Multi‑View filtering is done in CDS annotations
   // --------------------------------------------------------------------
-this.before('READ', 'PurchaseOrder_ERP1', async (req) => {
-    
-    if (req.event !== 'READ') {
-        return;
-    }
-
-      if (req.target?.isDraft || (req.data && req.data.ID)) {
-        return; 
-    }
-
-  
-    if (!req.query || !req.query.SELECT || !req.query.SELECT.from) {
-        return;
-    }
-
-    const ref = req.query.SELECT.from.ref;
-    if (ref && ref.length > 0) {
-        const firstSegment = ref[0];
-        if (typeof firstSegment === 'object' && firstSegment.id) {
-            if (firstSegment.id.includes('(') || firstSegment.id.endsWith('_drafts')) {
-                return;
-            }
-        }
-        if (req.query.SELECT.where) {
-            const whereStr = JSON.stringify(req.query.SELECT.where);
-            if (whereStr.includes('"ID"') || whereStr.includes('IsActiveEntity')) {
-                return;
-            }
-        }
-    }
+  this.on('READ', 'PurchaseOrder_ERP', async (req) => {
     try {
       const userEmail = 'keerthanadevi.natarajan@distrelec.com';
       const mappedVendor = await getMappedVendorForUser(userEmail);
 
-      const vendorNo = mappedVendor ? mappedVendor.VendorERPNumber : 'NOT_FOUND';
+      if (!mappedVendor) return [];
 
-      // Dynamically append your business filtering logic onto the list view
-      req.query.where({ VendorERPNumber: vendorNo });
+      const vendor = mappedVendor.VendorERPNumber;
+
+      // Base query
+      let query = SELECT.from(PurchaseOrder_ERP).where({
+        VendorERPNumber: vendor
+      });
+
+      return await cds.run(query);
 
     } catch (error) {
-      req.error(500, `Internal Row Filter Error: ${error.message}`);
+      req.error(500, `Internal Error: ${error.message}`);
     }
   });
 
-this.on('Acknowledge', 'PurchaseOrder_ERP1', async (req) => {
+  // --------------------------------------------------------------------
+  // Acknowledge Action — moves PO from New → Live
+  // --------------------------------------------------------------------
+  this.on('Acknowledge', async (req) => {
     try {
-      let targetID = null;
+      const { ID } = req.data;
 
-      // 1. Unify parameter object array parsing safely
-      if (req.params) {
-        if (Array.isArray(req.params) && req.params.length > 0) {
-          targetID = req.params[0].ID;
-        } else if (typeof req.params === 'object') {
-          targetID = req.params.ID;
-        } else if (typeof req.params === 'string') {
-          targetID = req.params;
-        }
-      }
-
-      if (!targetID && req.data && req.data.ID) {
-        targetID = req.data.ID;
-      }
-
-      await UPDATE(req.target)
+      await UPDATE(PurchaseOrder_ERP)
         .set({ Status: 'Live' })
-        .where({ ID: targetID });
-      if (req.target.drafts) {
-          await UPDATE(req.target.drafts)
-            .set({ Status: 'Live' })
-            .where({ ID: targetID });
-      }
+        .where({ ID });
 
       return true;
 
-    } catch (error) {     
-      req.error(500, `Action Execution Error: ${error.message}`);
+    } catch (error) {
+      req.error(500, `Acknowledge failed: ${error.message}`);
     }
   });
-  });
+
+});

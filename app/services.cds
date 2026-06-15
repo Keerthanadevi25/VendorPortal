@@ -1,2 +1,2 @@
 
-using from './purchseorder/annotations';
+using from '../srv/annotations';

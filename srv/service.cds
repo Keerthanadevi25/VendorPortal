@@ -10,16 +10,12 @@ service Vendor_portalService
 
     entity PurchaseOrders as
         projection on PurchaseOrder;
-    
-    entity PurchaseOrder_ERP1 as
-        projection on my.PurchaseOrder_ERP
-    actions{
-        action Acknowledge() returns Boolean;
-};
+entity PurchaseOrder_ERP as projection on my.PurchaseOrder_ERP;
+     // Action to move New → Live
+    action Acknowledge(ID: UUID) returns Boolean;
 }
 
 annotate Vendor_portalService with @requires :
 [
     'authenticated-user'
 ];
-annotate Vendor_portalService.PurchaseOrder_ERP1 with @odata.draft.enabled;
