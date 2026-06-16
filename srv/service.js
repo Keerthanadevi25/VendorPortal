@@ -135,7 +135,6 @@ module.exports = cds.service.impl(async function () {
         return req.error(400, 'Target Instance Identifier (ID) is missing.');
       }
 
-      // Update the active table instance state
       await UPDATE(req.target)
         .set({ Status: 'Live' })
         .where({ ID: targetID });
