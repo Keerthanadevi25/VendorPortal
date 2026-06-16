@@ -5,20 +5,20 @@ using { Vendor_portalService as srv } from './service';
 // ======================================================================
 annotate srv.PurchaseOrder_ERP1 with {
     ID                 @readonly;
-    RSPONumber         @readonly;
-    Status             @mandatory;
-    RSPOLineItemNumber @readonly;
-    RSArticleNUmber    @readonly;
-    Pack               @readonly;
-    VendorERPNumber    @readonly;
-    VendorPartNumber   @readonly;
-    Quantity           @readonly;
-    Unit               @readonly;
-    DateCreated        @readonly;
-    DeliverytoSite     @readonly;
-    UnitPrice          @readonly;
-    PricePerLineValue  @readonly;
-    RSPlanner          @readonly;
+    RSPONumber;
+    Status;
+    RSPOLineItemNumber;
+    RSArticleNUmber;
+    Pack;
+    VendorERPNumber;
+    VendorPartNumber;
+    Quantity;
+    Unit;
+    DateCreated;
+    DeliverytoSite;
+    UnitPrice;
+    PricePerLineValue;
+    RSPlanner;
     DeliveryDate       @mandatory;
 };
 
@@ -33,6 +33,15 @@ annotate srv.PurchaseOrder_ERP1 with @(
         { Value : VendorPartNumber,   Label : 'Vendor Part No' },
         { Value : Quantity,           Label : 'Quantity' },
         { Value : DeliveryDate,       Label : 'Delivery Date' },
+        { Value : VendorERPNumber,    Label : 'Vendor ERP Number' },
+        { Value : Pack,               Label : 'Pack' },
+        { Value : Unit,               Label : 'Unit' },
+        { Value : DateCreated,        Label : 'DateCreated' },
+        { Value : DeliverytoSite,     Label : 'DeliverytoSite' },
+        { Value : UnitPrice,          Label : 'UnitPrice' },
+        { Value : PricePerLineValue,  Label : 'PricePerLineValue' },
+        { Value : RSPlanner,          Label : 'RSPlanner' },
+
        
         // --------------------------------------------------------------
         // CUSTOM ACTION BUTTON: ACKNOWLEDGE (BOUND)
@@ -59,7 +68,16 @@ annotate srv.PurchaseOrder_ERP1 with @(
             { Value : DeliveryDate,       Label : 'Delivery Date' },
             { Value : Quantity,           Label : 'Quantity' },
             { Value : RSPOLineItemNumber, Label : 'Line Item Number' },
-            { Value : Status,             Label : 'Status' }
+            { Value : VendorPartNumber,   Label : 'Vendor Part No' },
+            { Value : Status,             Label : 'Status' },
+            { Value : VendorERPNumber,    Label : 'Vendor ERP Number' },
+            { Value : Pack,               Label : 'Pack' },
+            { Value : Unit,               Label : 'Unit' },
+            { Value : DateCreated,        Label : 'DateCreated' },
+            { Value : DeliverytoSite,     Label : 'DeliverytoSite' },
+            { Value : UnitPrice,          Label : 'UnitPrice' },
+            { Value : PricePerLineValue,  Label : 'PricePerLineValue' },
+            { Value : RSPlanner,          Label : 'RSPlanner' }
         ]
     },
 

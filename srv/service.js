@@ -1,5 +1,5 @@
 const cds = require('@sap/cds');
-const { SELECT } = cds.ql;
+const { SELECT, UPDATE } = cds.ql;
 
 module.exports = cds.service.impl(async function () {
 
@@ -10,7 +10,7 @@ module.exports = cds.service.impl(async function () {
   // Local entities
   const { MappingVendors, PurchaseOrder_ERP1 } = this.entities;
 
-  // get mapped vendor for current user
+  // Helper: get mapped vendor for current user
   async function getMappedVendorForUser(userEmail) {
     return cds.run(
       SELECT.one.from(MappingVendors)
@@ -58,46 +58,50 @@ module.exports = cds.service.impl(async function () {
 
   // --------------------------------------------------------------------
   // READ PurchaseOrder_ERP1 (internal DB, draft‑enabled)
-  //  - lets CAP handle all draft + navigation reads
-  //  - applies vendor filter only for list reads
+  //  - Lets CAP handle all draft, navigation, and single-entity reads
+  //  - Applies vendor filter strictly to multi-row list queries
   // --------------------------------------------------------------------
-this.before('READ', 'PurchaseOrder_ERP1', async (req) => {
+  this.before('READ', 'PurchaseOrder_ERP1', async (req) => {
     
-    if (req.event !== 'READ') {
-        return;
-    }
+    if (req.event !== 'READ') return;
 
-      if (req.target?.isDraft || (req.data && req.data.ID)) {
-        return; 
-    }
+    // 1. Skip if it is explicitly a draft runtime request
+    if (req.target?.isDraft) return;
 
-  
-    if (!req.query || !req.query.SELECT || !req.query.SELECT.from) {
-        return;
-    }
+    // 2. Skip if we are targeting a specific record by its primary key payload
+    if (req.data && req.data.ID) return;
 
-    const ref = req.query.SELECT.from.ref;
-    if (ref && ref.length > 0) {
-        const firstSegment = ref[0];
-        if (typeof firstSegment === 'object' && firstSegment.id) {
-            if (firstSegment.id.includes('(') || firstSegment.id.endsWith('_drafts')) {
-                return;
-            }
+    // 3. Robust AST checking on the incoming query structure
+    if (req.query && req.query.SELECT) {
+      const selectFrom = req.query.SELECT.from;
+      
+      // Look for OData key predicates directly on the entity segments (e.g. ref: [{ id: 'PurchaseOrder_ERP1', where: [...] }])
+      if (selectFrom && selectFrom.ref) {
+        const primarySegment = selectFrom.ref[0];
+        if (primarySegment && (primarySegment.where || (typeof primarySegment === 'object' && primarySegment.id && primarySegment.id.includes('(')))) {
+          return;
         }
-        if (req.query.SELECT.where) {
-            const whereStr = JSON.stringify(req.query.SELECT.where);
-            if (whereStr.includes('"ID"') || whereStr.includes('IsActiveEntity')) {
-                return;
-            }
+      }
+
+      // Look for direct key lookups inside standard WHERE or JOIN definitions
+      if (req.query.SELECT.where) {
+        const whereStr = JSON.stringify(req.query.SELECT.where);
+        if (whereStr.includes('"ID"') || whereStr.includes('"ref":["ID"]') || whereStr.includes('IsActiveEntity')) {
+          return;
         }
+      }
     }
+
+    // ------------------------------------------------------------------
+    // SAFE REGION: Request is verified as an open multi-row list query.
+    // Apply row-level vendor security rules.
+    // ------------------------------------------------------------------
     try {
       const userEmail = 'keerthanadevi.natarajan@distrelec.com';
       const mappedVendor = await getMappedVendorForUser(userEmail);
-
       const vendorNo = mappedVendor ? mappedVendor.VendorERPNumber : 'NOT_FOUND';
 
-      // Dynamically append your business filtering logic onto the list view
+      // Inject the vendor scoping parameter onto the collection query safely
       req.query.where({ VendorERPNumber: vendorNo });
 
     } catch (error) {
@@ -105,11 +109,14 @@ this.before('READ', 'PurchaseOrder_ERP1', async (req) => {
     }
   });
 
-this.on('Acknowledge', 'PurchaseOrder_ERP1', async (req) => {
+  // --------------------------------------------------------------------
+  // ACTION: Acknowledge PurchaseOrder_ERP1
+  // --------------------------------------------------------------------
+  this.on('Acknowledge', 'PurchaseOrder_ERP1', async (req) => {
     try {
       let targetID = null;
 
-      // 1. Unify parameter object array parsing safely
+      // Extract the key parameter safely across alternative variant types
       if (req.params) {
         if (Array.isArray(req.params) && req.params.length > 0) {
           targetID = req.params[0].ID;
@@ -124,13 +131,20 @@ this.on('Acknowledge', 'PurchaseOrder_ERP1', async (req) => {
         targetID = req.data.ID;
       }
 
+      if (!targetID) {
+        return req.error(400, 'Target Instance Identifier (ID) is missing.');
+      }
+
+      // Update the active table instance state
       await UPDATE(req.target)
         .set({ Status: 'Live' })
         .where({ ID: targetID });
+
+      // Cleanly sync status directly into the backup draft state if a draft exists
       if (req.target.drafts) {
-          await UPDATE(req.target.drafts)
-            .set({ Status: 'Live' })
-            .where({ ID: targetID });
+        await UPDATE(req.target.drafts)
+          .set({ Status: 'Live' })
+          .where({ ID: targetID });
       }
 
       return true;
@@ -139,4 +153,5 @@ this.on('Acknowledge', 'PurchaseOrder_ERP1', async (req) => {
       req.error(500, `Action Execution Error: ${error.message}`);
     }
   });
-  });
+
+});

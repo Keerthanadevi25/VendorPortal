@@ -2,14 +2,16 @@
   "name": "Vendor_portal",
   "version": "1.0.0",
   "dependencies": {
+    "22": "^0.0.0",
     "@cap-js/hana": "^2",
     "@sap-cloud-sdk/connectivity": "^4.6.0",
     "@sap-cloud-sdk/http-client": "^4.6.0",
     "@sap-cloud-sdk/resilience": "^4",
     "@sap-cloud-sdk/util": "^4.6.0",
+    "@sap/approuter": "22.0.1",
     "@sap/cds": "^9.9.1",
     "@sap/cds-dk": "^9.9.1",
-    "@sap/low-code-event-handler": "^1.2.5",
+    "@sap/low-code-event-handler": "^1.2.2",
     "@sap/xsenv": ">=3.3.2 <3.3.3",
     "@sap/xssec": "^4.13.0",
     "hdb": "^2.27.1",
@@ -71,5 +73,5 @@
   ],
   "sapux": [
     "app/purchseorder"
-  ] 
+  ]
 }
