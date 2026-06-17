@@ -92,10 +92,7 @@ module.exports = cds.service.impl(async function () {
       }
     }
 
-    // ------------------------------------------------------------------
-    // SAFE REGION: Request is verified as an open multi-row list query.
-    // Apply row-level vendor security rules.
-    // ------------------------------------------------------------------
+    
     try {
       const userEmail = 'keerthanadevi.natarjan@distrelec.com';
       const mappedVendor = await getMappedVendorForUser(userEmail);
