@@ -97,7 +97,7 @@ module.exports = cds.service.impl(async function () {
     // Apply row-level vendor security rules.
     // ------------------------------------------------------------------
     try {
-      const userEmail = 'keerthanadevi.natarajan@distrelec.com';
+      const userEmail = 'keerthanadevi.natarjan@distrelec.com';
       const mappedVendor = await getMappedVendorForUser(userEmail);
       const vendorNo = mappedVendor ? mappedVendor.VendorERPNumber : 'NOT_FOUND';
 
