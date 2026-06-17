@@ -1,9 +1,6 @@
 const cds = require('@sap/cds');
 const { SELECT, UPDATE } = cds.ql;
 
-// Single source of truth for testing fallback email address
-const MOCK_USER_EMAIL = 'keerthanadevi.natarajan@distrelec.com';
-
 module.exports = cds.service.impl(async function () {
 
   // External service
@@ -27,8 +24,8 @@ module.exports = cds.service.impl(async function () {
   // --------------------------------------------------------------------
   this.on('READ', 'PurchaseOrders', async (req) => {
     try {
-      // Use live authenticated user ID if it looks like an email, otherwise fallback to mock
-      const userEmail = req.user.id.includes('@') ? req.user.id : MOCK_USER_EMAIL;
+      // In real life: const userEmail = req.user.id;
+      const userEmail = 'keerthanadevi.natarajan@distrelec.com';
 
       const mappedVendor = await getMappedVendorForUser(userEmail);
       if (!mappedVendor) {
@@ -61,48 +58,49 @@ module.exports = cds.service.impl(async function () {
 
   // --------------------------------------------------------------------
   // READ PurchaseOrder_ERP1 (internal DB, draft‑enabled)
+  //  - Lets CAP handle all draft, navigation, and single-entity reads
+  //  - Applies vendor filter strictly to multi-row list queries
   // --------------------------------------------------------------------
   this.before('READ', 'PurchaseOrder_ERP1', async (req) => {
     
     if (req.event !== 'READ') return;
+
+    // 1. Skip if it is explicitly a draft runtime request
     if (req.target?.isDraft) return;
 
-    // Skip if targeting a specific record payload directly by key parameters
+    // 2. Skip if we are targeting a specific record by its primary key payload
     if (req.data && req.data.ID) return;
 
-    // Refined safety check: Only bypass filter if the incoming request is definitively a single-row lookup
+    // 3. Robust AST checking on the incoming query structure
     if (req.query && req.query.SELECT) {
       const selectFrom = req.query.SELECT.from;
+      
+      // Look for OData key predicates directly on the entity segments (e.g. ref: [{ id: 'PurchaseOrder_ERP1', where: [...] }])
       if (selectFrom && selectFrom.ref) {
         const primarySegment = selectFrom.ref[0];
-        // If query targets single ID format like PurchaseOrder_ERP1(ID='...') or explicit where key
-        if (primarySegment && primarySegment.where) {
-          const whereStr = JSON.stringify(primarySegment.where);
-          if (whereStr.includes('"ID"') || whereStr.includes('"ref":["ID"]')) return;
+        if (primarySegment && (primarySegment.where || (typeof primarySegment === 'object' && primarySegment.id && primarySegment.id.includes('(')))) {
+          return;
         }
       }
-      
+
+      // Look for direct key lookups inside standard WHERE or JOIN definitions
       if (req.query.SELECT.where) {
         const whereStr = JSON.stringify(req.query.SELECT.where);
-        // Do not alter runtime queries looking up exact instance keys or checking draft status layers
         if (whereStr.includes('"ID"') || whereStr.includes('"ref":["ID"]') || whereStr.includes('IsActiveEntity')) {
           return;
         }
       }
     }
 
+    
     try {
-      // FIX: Typo resolved by utilizing unified string variable
-      const userEmail = req.user.id.includes('@') ? req.user.id : MOCK_USER_EMAIL;
+      const userEmail = req.user.id;
+     // const userEmail = 'keerthanadevi.natarajan@distrelec.com';
       const mappedVendor = await getMappedVendorForUser(userEmail);
-      
-      if (mappedVendor && mappedVendor.VendorERPNumber) {
-        // Safe OData query mutation injects vendor runtime filter parameter criteria
-        req.query.where({ VendorERPNumber: mappedVendor.VendorERPNumber });
-      } else {
-        // Force empty collection returns safely if mapping entry does not exist
-        req.query.where({ VendorERPNumber: 'NOT_BOUND_USER_MAPPING' });
-      }
+      const vendorNo = mappedVendor ? mappedVendor.VendorERPNumber : 'NOT_FOUND';
+
+      // Inject the vendor scoping parameter onto the collection query safely
+      req.query.where({ VendorERPNumber: vendorNo });
 
     } catch (error) {
       req.error(500, `Internal Row Filter Error: ${error.message}`);
@@ -116,6 +114,7 @@ module.exports = cds.service.impl(async function () {
     try {
       let targetID = null;
 
+      // Extract the key parameter safely across alternative variant types
       if (req.params) {
         if (Array.isArray(req.params) && req.params.length > 0) {
           targetID = req.params[0].ID;
@@ -138,6 +137,7 @@ module.exports = cds.service.impl(async function () {
         .set({ Status: 'Live' })
         .where({ ID: targetID });
 
+      // Cleanly sync status directly into the backup draft state if a draft exists
       if (req.target.drafts) {
         await UPDATE(req.target.drafts)
           .set({ Status: 'Live' })
